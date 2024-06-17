@@ -10,6 +10,13 @@ import os
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", os.urandom(16))
 bcrypt = Bcrypt(app)
+
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = "jaeczxdev@gmail.com"
+app.config["MAIL_PASSWORD"] = "ylap dqwx cnzc bnky"
+app.config["MAIL_DEFAULT_SENDER"] = "jaeczxdev@gmail.com"
 mail = Mail(app)
 
 
@@ -62,13 +69,17 @@ def login():
         rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
         password = rows[0]["password"]
 
-        if len(rows) != 1 or not bcrypt.check_password_hash(password, request.form.get("password")):
+        if rows and bcrypt.check_password_hash(password, request.form.get("password")):
+            if rows[0]["verified"] == 1:
+                session["user_id"] = rows[0]["id"]  
+                return redirect("/")
+            else:
+                flash("Please verify your email", "danger")
+                return redirect("/login")
+        else:
             flash("Invalid email or password", "danger")
             return redirect("/login")
-
-        session["user_id"] = rows[0]["id"]  
         
-        return redirect("/")
     else:
         return render_template("login.html")
 
