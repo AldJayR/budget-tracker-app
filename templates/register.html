@@ -80,6 +80,16 @@
 
     <div class="login-container">
         <h3 class="text-center">Register</h3>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mt-4">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
         <form action="/register" method="post">
             <div class="input-container">
                 <input type="email" id="email" name="email" required autofocus autocomplete="off">
