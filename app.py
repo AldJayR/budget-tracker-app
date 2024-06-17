@@ -1,14 +1,16 @@
-from flask import Flask, redirect, render_template, session, jsonify, flash, request
+from flask import Flask, redirect, render_template, session, jsonify, flash, request, url_for
 from flask_session import Session
 from cs50 import SQL
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
+import secrets
 from functools import wraps
 import os
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", os.urandom(16))
 bcrypt = Bcrypt(app)
+mail = Mail(app)
 
 
 app.config["SESSION_PERMANENT"] = False
@@ -91,14 +93,39 @@ def register():
         if existing_user:
             flash("Email already taken", "danger")
             return redirect("/register")
+
+        token = secrets.token_urlsafe(20)
         
         hashed_password = bcrypt.generate_password_hash(password)
 
-        db.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, hashed_password)
+        db.execute("INSERT INTO users (username, email, password, token) VALUES (?, ?, ?, ?)", username, email, hashed_password, token)
 
         return redirect("/")
     else:    
         return render_template("register.html")
+
+def send_verification_email(email, verification_url):
+    msg = Message("Verify Your Email", sender="Jae Dev", recipients=[email])
+    msg.body = f"Click the following link to verify your email: {verification_url}"
+    mail.send(msg)
+
+@app.route("/verify_email/<token>")
+def verify_email(token):
+    user = db.execute("SELECT * FROM users WHERE token = ?", token)
+
+    if user:
+        db.execute("UPDATE users SET email_verified = ? WHERE token = ?", 1, token)
+        flash("Email verified", "success")
+    else:
+        flash("Invalid verification link", "danger")
+
+    return redirect("/")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+
+    return redirect("/login")
 
 if __name__ == "__main__":
     app.run(debug=True)
