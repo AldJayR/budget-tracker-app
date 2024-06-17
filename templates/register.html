@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block style %}
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            width: 400px;
+            padding: 30px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            
+        }
+
+        .input-container {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        input[type="email"], input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 10px 10px 10px 5px;
+            display: block;
+            border: none;
+            border-bottom: 1px solid #757575;
+            background: none;
+            font-size: 16px;
+            color: #333;
+            outline: none;
+        }
+
+        input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+            border-bottom: 2px solid #3f51b5;
+        }
+
+        label {
+            color: #999;
+            font-size: 16px;
+            position: absolute;
+            pointer-events: none;
+            left: 5px;
+            top: 10px;
+            transition: 0.2s ease all;
+        }
+
+        input[type="email"]:focus ~ label,
+        input[type="email"]:valid ~ label,
+        input[type="password"]:focus ~ label,
+        input[type="password"]:valid ~ label,
+        input[type="text"]:valid ~ label,
+        input[type="text"]:focus ~ label {
+            top: -20px;
+            font-size: 12px;
+            color: #3f51b5;
+            margin-top: 10px;
+        }
+
+        input[type="email"]:focus ~ label,
+        input[type="password"]:focus ~ label
+        input[type="text"]:focus ~ label {
+            color: #3f51b5;
+        }
+
+{% endblock %}
+
+{% block body %}
+
+    <div class="login-container">
+        <h3 class="text-center">Register</h3>
+        <form action="/register" method="post">
+            <div class="input-container">
+                <input type="email" id="email" name="email" required autofocus autocomplete="off">
+                <label for="email">Email</label>
+            </div>
+            <div class="input-container">
+                <input type="text" id="username" name="username" required autofocus autocomplete="off">
+                <label for="username">Username</label>
+            </div>
+            <div class="input-container">
+                <input type="password" id="password" name="password" class="password" required autofocus autocomplete="off">
+                <label for="password">Password</label>
+            </div>
+            <div class="input-container">
+                <input type="password" name="confirmation" class="password" required autofocus autocomplete="off">
+                <label for="password">Confirm Password</label>
+            </div>
+            <input type="checkbox" id="show-password" class="form-check-input me-2">Show password
+        
+           
+            <button class="btn btn-primary d-block mt-3 w-100">Register</button>
+        </form>
+    </div>
+
+{% endblock %}
