@@ -44,8 +44,11 @@ def login_required(f):
 
 
 @app.route("/")
+@login_required
 def index():
-    return render_template("index.html")
+    username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])
+    
+    return render_template("index.html", username=username[0]["username"])
 
 
 
@@ -67,9 +70,8 @@ def login():
             return redirect("/login")
         
         rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
-        password = rows[0]["password"]
 
-        if rows and bcrypt.check_password_hash(password, request.form.get("password")):
+        if rows and bcrypt.check_password_hash(rows[0]["password"], request.form.get("password")):
             if rows[0]["email_verified"] == 1:
                 session["user_id"] = rows[0]["id"]  
                 return redirect("/")
@@ -78,6 +80,7 @@ def login():
                 return redirect("/login")
         else:
             flash("Invalid email or password", "danger")
+            print("Hello")
             return redirect("/login")
         
     else:
@@ -119,7 +122,8 @@ def register():
         verification_url = url_for("verify_email", token=token, _external=True)
         send_verification_email(email, verification_url)
 
-        return redirect("/")
+        flash("Check your email to get verified", "success")
+        return redirect("/register")
     else:    
         return render_template("register.html")
 

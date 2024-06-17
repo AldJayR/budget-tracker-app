@@ -1,3 +1,7 @@
 a {
     text-decoration: none;
 }
+
+.logo-center {
+    flex: 1;
+}
