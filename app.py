@@ -70,7 +70,7 @@ def login():
         password = rows[0]["password"]
 
         if rows and bcrypt.check_password_hash(password, request.form.get("password")):
-            if rows[0]["verified"] == 1:
+            if rows[0]["email_verified"] == 1:
                 session["user_id"] = rows[0]["id"]  
                 return redirect("/")
             else:
@@ -86,6 +86,11 @@ def login():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+
+    if "user_id" in session:
+        return redirect("/")
+
+
     if request.method == "POST":
         email = request.form.get("email")
         username = request.form.get("username")
@@ -110,6 +115,9 @@ def register():
         hashed_password = bcrypt.generate_password_hash(password)
 
         db.execute("INSERT INTO users (username, email, password, token) VALUES (?, ?, ?, ?)", username, email, hashed_password, token)
+
+        verification_url = url_for("verify_email", token=token, _external=True)
+        send_verification_email(email, verification_url)
 
         return redirect("/")
     else:    
