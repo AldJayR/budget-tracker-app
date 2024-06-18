@@ -47,9 +47,33 @@ def login_required(f):
 @login_required
 def index():
     username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])
-    
-    return render_template("index.html", username=username[0]["username"])
+    transactions = db.execute("SELECT * FROM transactions WHERE user_id = ?", session["user_id"])
+    users = db.execute("SELECT * FROM users WHERE id = ?", session["user_id"])
 
+    
+    return render_template("index.html", username=username[0]["username"], transactions=transactions, users=users)
+
+@app.route("/add-transaction/", methods=["POST"])
+def add_transaction():
+    description = request.form.get("description")
+    price = request.form.get("price")
+    date = request.form.get("date")
+
+    if not description or not price or not date:
+        return jsonify(success=False, error=" Missing data")
+    
+    try:
+        transaction_id = db.execute("INSERT INTO transactions (category, amount, date, user_id) VALUES (?, ?, ?, ?)", description, price, date, session["user_id"])
+    except Exception as e:
+        return jsonify(success=False, error=str(e))
+
+    new_transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id)
+
+
+    if new_transaction:
+        return jsonify(success=True, transaction=new_transaction[0])
+    else:
+        return jsonify(success=False, error="Failed to add transaction")
 
 
 @app.route("/login", methods=["GET", "POST"])
