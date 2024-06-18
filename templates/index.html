@@ -21,10 +21,10 @@
             </div>
           </div>
 
-        <nav class="navbar bg-info navbar-dark">
+        <nav class="navbar bg-primary bg-gradient navbar-dark">
             <div class="container-fluid">
                 <div class="left">
-                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#user-sidebar">
+                    <button class="navbar-toggler bg-transparent border" type="button" data-bs-toggle="offcanvas" data-bs-target="#user-sidebar">
                         <span class="navbar-toggler-icon"></span>
                       </button>
                 </div>
@@ -35,16 +35,70 @@
         </nav>
     </header>
     <main>
-        <div class="container">
-            <table class="table table-striped">
+        <div class="container mt-1">
+            <h2 class="text-center">Transactions</h2>
+            <table class="table table-striped table-bordered">
                 <thead>
                     <tr>
                         <th>Type</th>
                         <th>Money</th>
-                        <th></th>
+                        <th>Date</th>
                     </tr>
                 </thead>
+                <tbody>
+                    {% if not transactions %}
+                        <tr>
+                            <td colspan="3" class="text-center">No transactions</td>
+                        </tr>
+                    {% else %}
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td><input type="checkbox" style="display: none;" class="form-check-input"> {{ transaction.category }}</td>
+                            <td><input type="checkbox" style="display: none;" class="form-check-input">{{ transaction.amount }}</td>
+                            <td><input type="checkbox" style="display: none;" class="form-check-input">{{ transaction.date }}</td>
+                        {% endfor %}
+                    {% endif %}
+                    </tr>
+                </tbody>
             </table>
+            <div class="action-btns float-end">
+                <button class="btn btn-outline-primary" id="add-btn" data-bs-toggle="modal" data-bs-target="#transactionModal">Add</button>
+                <button class="btn btn-outline-secondary" id="edit-btn">Edit</button>
+            </div>
+            <div>
+                <p>Total Money: <strong>{{ users.money }}</strong></p>
+            </div>
+        </div>
+
+        <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="transactionModalLabel">Add Transaction</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="transaction-form">
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <input type="text" class="form-control" id="description" name="description">
+                            </div>
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price</label>
+                                <input type="number" class="form-control" id="price" name="price">
+                            </div>
+                            <div class="mb-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" name="date">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -58,4 +112,52 @@
         {% endif %}
     {% endwith %}
 
+    {% endblock %}
+
+    {% block script %}
+    <script>
+        const saveBtn = document.getElementById("save-btn")
+        const editBtn = document.getElementById("edit-btn");
+
+        saveBtn.addEventListener("click", async () => {
+            const form = document.getElementById("transaction-form");
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/add-transaction", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const transactionModal = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
+                    transactionModal.hide();
+
+                    form.reset();
+
+                    const tbody = document.querySelector('table tbody');
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>${data.transaction.category}</td>
+                        <td>${data.transaction.amount}</td>
+                        <td>${data.transaction.date}</td>
+                    `;
+                    tbody.appendChild(newRow);
+
+                    const noTransactionsRow = document.querySelector('table tbody tr td[colspan="4"]');
+                    if (noTransactionsRow) {
+                            noTransactionsRow.parentElement.remove();
+                    }
+                } else {
+                    alert("Failed to add transaction. Please try again later" + data.error)
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adding the transaction.');
+            }
+        })
+    </script>
+       
     {% endblock %}
