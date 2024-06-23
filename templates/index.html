@@ -52,10 +52,10 @@
                         </tr>
                     {% else %}
                         {% for transaction in transactions %}
-                        <tr>
-                            <td><input type="checkbox" style="display: none;" class="form-check-input"> {{ transaction.category }}</td>
-                            <td><input type="checkbox" style="display: none;" class="form-check-input">{{ transaction.amount }}</td>
-                            <td><input type="checkbox" style="display: none;" class="form-check-input">{{ transaction.date }}</td>
+                        <tr id="{{ transaction.id }}">
+                            <td><i class="fas fa-edit edit" data-bs-toggle="modal" data-bs-target="#transactionModal"></i>{{ transaction.category }}</td>
+                            <td>P{{ transaction.amount }}</td>
+                            <td>{{ transaction.date }}</td>
                         {% endfor %}
                     {% endif %}
                     </tr>
@@ -63,7 +63,6 @@
             </table>
             <div class="action-btns float-end">
                 <button class="btn btn-outline-primary" id="add-btn" data-bs-toggle="modal" data-bs-target="#transactionModal">Add</button>
-                <button class="btn btn-outline-secondary" id="edit-btn">Edit</button>
             </div>
             <div>
                 <p>Total Money: <strong>{{ users.money }}</strong></p>
@@ -116,48 +115,108 @@
 
     {% block script %}
     <script>
-        const saveBtn = document.getElementById("save-btn")
-        const editBtn = document.getElementById("edit-btn");
-
-        saveBtn.addEventListener("click", async () => {
-            const form = document.getElementById("transaction-form");
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch("/add-transaction", {
-                    method: "POST",
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    const transactionModal = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
-                    transactionModal.hide();
-
-                    form.reset();
-
-                    const tbody = document.querySelector('table tbody');
-                    const newRow = document.createElement('tr');
-                    newRow.innerHTML = `
-                        <td>${data.transaction.category}</td>
-                        <td>${data.transaction.amount}</td>
-                        <td>${data.transaction.date}</td>
-                    `;
-                    tbody.appendChild(newRow);
-
-                    const noTransactionsRow = document.querySelector('table tbody tr td[colspan="4"]');
-                    if (noTransactionsRow) {
-                            noTransactionsRow.parentElement.remove();
+        document.addEventListener("DOMContentLoaded", () => {
+            const editIcons = document.querySelectorAll(".edit");
+    
+            editIcons.forEach(icon => {
+                icon.addEventListener("click", async (event) => {
+                    const transactionId = event.target.parentElement.parentElement.id;
+    
+                    try {
+                        const response = await fetch(`/edit-transaction/${transactionId}`, {
+                            method: "GET"
+                        });
+    
+                        const data = await response.json();
+    
+                        if (data.success) {
+                            const transaction = data.transaction;
+    
+                            const form = document.getElementById("transaction-form");
+                            form.elements["description"].value = transaction.category;
+                            form.elements["price"].value = transaction.amount;
+                            form.elements["date"].value = transaction.date;
+    
+                            const saveBtn = document.getElementById("save-btn");
+                            saveBtn.dataset.transactionId = transaction.id;  
+                        } else {
+                            alert("Failed to fetch transaction details for editing.");
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('An error occurred while fetching transaction details for editing.');
                     }
-                } else {
-                    alert("Failed to add transaction. Please try again later" + data.error)
+                });
+            });
+    
+            const saveBtn = document.getElementById("save-btn");
+            saveBtn.addEventListener("click", async () => {
+                const form = document.getElementById("transaction-form");
+                const formData = new FormData(form);
+    
+                const transactionId = saveBtn.dataset.transactionId;
+    
+                try {
+                    let response;
+                    if (transactionId) {
+                        response = await fetch(`/edit-transaction/${transactionId}`, {
+                            method: "POST",
+                            body: formData
+                        });
+                    } else {
+                        response = await fetch("/add-transaction", {
+                            method: "POST",
+                            body: formData
+                        });
+                    }
+    
+                    const data = await response.json();
+    
+                    if (data.success) {
+                        const transactionModal = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
+                        transactionModal.hide();
+    
+                        form.reset();
+    
+                        if (transactionId) {
+                            // Update existing row in table
+                            const editedRow = document.getElementById(transactionId);
+                            editedRow.innerHTML = `
+                                <td><i class="fas fa-edit edit">${data.transaction.category}</td>
+                                <td>${data.transaction.amount}</td>
+                                <td>${data.transaction.date}</td>
+                            `;
+                        } else {
+                            const tbody = document.querySelector('table tbody');
+                            const newRow = document.createElement('tr');
+                            newRow.id = `transaction-${data.transaction.id}`;
+                            newRow.innerHTML = `
+                                <td><i class="fas fa-edit edit"></i>${data.transaction.category}</td>
+                                <td>${data.transaction.amount}</td>
+                                <td>${data.transaction.date}</td>
+                            `;
+                            tbody.appendChild(newRow);
+    
+                            const noTransactionsRow = document.querySelector('table tbody tr td[colspan="4"]');
+                            if (noTransactionsRow) {
+                                noTransactionsRow.parentElement.remove();
+                            }
+                        }
+                    } else {
+                        alert("Failed to save transaction. Please try again later.");
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving the transaction.');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while adding the transaction.');
-            }
-        })
+            });
+    
+            const addBtn = document.getElementById("add-btn");
+            addBtn.addEventListener("click", () => {
+                const saveBtn = document.getElementById("save-btn");
+                saveBtn.removeAttribute("data-transaction-id");
+            });
+        });
     </script>
        
     {% endblock %}
