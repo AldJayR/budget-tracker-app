@@ -75,6 +75,37 @@ def add_transaction():
     else:
         return jsonify(success=False, error="Failed to add transaction")
 
+@app.route("/edit-transaction/<int:transaction_id>", methods=["GET", "POST"])
+def edit_transaction(transaction_id):
+    if request.method == "GET":
+        transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id)
+
+        if transaction:
+            return jsonify(success=True, transaction=transaction)
+        else:
+            return jsonify(success=False, error="Transaction not found")
+    else:
+        description = request.form.get("description")
+        amount = request.form.get("price")
+        date = request.form.get("date")
+
+        if not description or not amount or not date:
+            return jsonify(success=False, error="Missing data")
+
+        try:
+            db.execute("UPDATE transactions SET category = ?, amount = ?, date = ? WHERE id = ?",
+                       description, amount, date, transaction_id)
+            db.commit()
+        except Exception as e:
+            return jsonify(success=False, error=str(e))
+
+        updated_transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id).fetchone()
+
+        if updated_transaction:
+            return jsonify(success=True, transaction=updated_transaction)
+        else:
+            return jsonify(success=False, error="Failed to update transaction")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
