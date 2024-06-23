@@ -5,3 +5,18 @@ a {
 .logo-center {
     flex: 1;
 }
+
+.edit {
+    margin-right: 5px;
+    opacity: 0;
+    cursor: pointer;
+    color: gray;
+}
+
+tr:hover .edit {
+    opacity: 1;
+}
+
+.edit:active {
+    color: red;
+}
