@@ -54,11 +54,11 @@
                         {% for transaction in transactions %}
                         <tr id="{{ transaction.id }}">
                             <td><i class="fas fa-edit edit" data-bs-toggle="modal" data-bs-target="#transactionModal"></i>{{ transaction.category }}</td>
-                            <td>P{{ transaction.amount }}</td>
+                            <td>P{{ transaction.amount|int }}</td>
                             <td>{{ transaction.date }}</td>
+                        </tr>
                         {% endfor %}
                     {% endif %}
-                    </tr>
                 </tbody>
             </table>
             <div class="action-btns float-end">
@@ -115,12 +115,15 @@
 
     {% block script %}
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
             const editIcons = document.querySelectorAll(".edit");
+            const modalTitle = document.getElementById("transactionModalLabel");
+            const form = document.getElementById("transaction-form");
+
     
             editIcons.forEach(icon => {
                 icon.addEventListener("click", async (event) => {
                     const transactionId = event.target.parentElement.parentElement.id;
+                    modalTitle.textContent = "Edit Transaction";
     
                     try {
                         const response = await fetch(`/edit-transaction/${transactionId}`, {
@@ -131,14 +134,15 @@
     
                         if (data.success) {
                             const transaction = data.transaction;
+                            console.log(transaction)
     
-                            const form = document.getElementById("transaction-form");
-                            form.elements["description"].value = transaction.category;
-                            form.elements["price"].value = transaction.amount;
-                            form.elements["date"].value = transaction.date;
+                            form.elements["description"].value = transaction[0]["category"];
+                            form.elements["price"].value = transaction[0]["amount"];
+                            form.elements["date"].value = transaction[0]["date"];
     
                             const saveBtn = document.getElementById("save-btn");
-                            saveBtn.dataset.transactionId = transaction.id;  
+                            saveBtn.dataset.transactionId = transaction[0]["id"];
+                            console.log(saveBtn.dataset.transactionId);
                         } else {
                             alert("Failed to fetch transaction details for editing.");
                         }
@@ -151,10 +155,10 @@
     
             const saveBtn = document.getElementById("save-btn");
             saveBtn.addEventListener("click", async () => {
-                const form = document.getElementById("transaction-form");
                 const formData = new FormData(form);
     
                 const transactionId = saveBtn.dataset.transactionId;
+                console.log(transactionId)
     
                 try {
                     let response;
@@ -179,12 +183,11 @@
                         form.reset();
     
                         if (transactionId) {
-                            // Update existing row in table
                             const editedRow = document.getElementById(transactionId);
                             editedRow.innerHTML = `
-                                <td><i class="fas fa-edit edit">${data.transaction.category}</td>
-                                <td>${data.transaction.amount}</td>
-                                <td>${data.transaction.date}</td>
+                                <td><i class="fas fa-edit edit"></i>${data.transaction[0]["category"]}</td>
+                                <td>P${data.transaction[0]["amount"]}</td>
+                                <td>${data.transaction[0]["date"]}</td>
                             `;
                         } else {
                             const tbody = document.querySelector('table tbody');
@@ -192,7 +195,7 @@
                             newRow.id = `transaction-${data.transaction.id}`;
                             newRow.innerHTML = `
                                 <td><i class="fas fa-edit edit"></i>${data.transaction.category}</td>
-                                <td>${data.transaction.amount}</td>
+                                <td>P${data.transaction.amount}</td>
                                 <td>${data.transaction.date}</td>
                             `;
                             tbody.appendChild(newRow);
@@ -213,10 +216,12 @@
     
             const addBtn = document.getElementById("add-btn");
             addBtn.addEventListener("click", () => {
+                modalTitle.textContent = "Add Transaction";
+                form.reset();
                 const saveBtn = document.getElementById("save-btn");
                 saveBtn.removeAttribute("data-transaction-id");
             });
-        });
+
     </script>
        
     {% endblock %}

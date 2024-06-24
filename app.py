@@ -95,12 +95,10 @@ def edit_transaction(transaction_id):
         try:
             db.execute("UPDATE transactions SET category = ?, amount = ?, date = ? WHERE id = ?",
                        description, amount, date, transaction_id)
-            db.commit()
         except Exception as e:
             return jsonify(success=False, error=str(e))
 
-        updated_transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id).fetchone()
-
+        updated_transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id)
         if updated_transaction:
             return jsonify(success=True, transaction=updated_transaction)
         else:
