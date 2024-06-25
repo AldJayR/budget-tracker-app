@@ -49,7 +49,7 @@ def index():
     username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])
     transactions = db.execute("SELECT * FROM transactions WHERE user_id = ?", session["user_id"])
     users = db.execute("SELECT * FROM users WHERE id = ?", session["user_id"])
-
+    
     
     return render_template("index.html", username=username[0]["username"], transactions=transactions, users=users)
 
@@ -103,6 +103,14 @@ def edit_transaction(transaction_id):
             return jsonify(success=True, transaction=updated_transaction)
         else:
             return jsonify(success=False, error="Failed to update transaction")
+
+@app.route("/delete-transaction/<int:transaction_id>", methods=["POST"])
+def delete_transaction(transaction_id):
+    transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id)
+
+    if transaction:
+        db.execute("DELETE FROM transactions WHERE id = ?", transaction_id)
+        return jsonify(success=True, message="Transaction succesfully deleted")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -192,10 +200,37 @@ def verify_email(token):
     if user:
         db.execute("UPDATE users SET email_verified = ? WHERE token = ?", 1, token)
         flash("Email verified", "success")
+        session["user_id"] = user[0]["id"] 
     else:
         flash("Invalid verification link", "danger")
 
-    return redirect("/")
+    return redirect("/setup")
+
+@app.route("/setup", methods=["GET", "POST"])
+@login_required
+def setup():
+    user = db.execute("SELECT setup FROM users WHERE id = ?", session["user_id"])
+
+    if user[0]["setup"] == 'True':
+        return redirect("/")
+    else:
+        if request.method == "POST":
+            username = request.form.get("username")
+            weekly_budget = request.form.get("weekly-budget")
+            contact_number = request.form.get("contact-number")
+
+            if not username or not weekly_budget or not contact_number:
+                flash("Missing details", "warning")
+                return redirect("/setup")
+            
+            weekly_budget = int(weekly_budget)
+
+            db.execute("UPDATE users SET username = ?, weekly_budget = ?, contact_number = ? WHERE id = ?", username, weekly_budget, contact_number, session["user_id"])
+
+            return redirect("/")
+        else:
+            return render_template("setup.html")
+
 
 @app.route("/logout")
 def logout():
