@@ -1,5 +1,10 @@
 {% extends "layout.html" %}
 
+{% block title %}
+    Home
+{% endblock %}
+
+
 {% block body %}
 
     <header>
@@ -65,7 +70,7 @@
                 <button class="btn btn-outline-primary" id="add-btn" data-bs-toggle="modal" data-bs-target="#transactionModal">Add</button>
             </div>
             <div>
-                <p>Total Money: <strong>{{ users.money }}</strong></p>
+                <p>Total Money: <strong>{{ users.weekly_budget }}</strong></p>
             </div>
         </div>
 
@@ -93,8 +98,9 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+                        <button type="button" id="close-btn" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-outline-danger" id="delete-btn" style="display:none;">Delete</button>
+                        <button type="submit" class="btn btn-outline-primary" id="save-btn">Save</button>
                     </div>
                 </div>
             </div>
@@ -115,113 +121,7 @@
 
     {% block script %}
     <script>
-            const editIcons = document.querySelectorAll(".edit");
-            const modalTitle = document.getElementById("transactionModalLabel");
-            const form = document.getElementById("transaction-form");
-
-    
-            editIcons.forEach(icon => {
-                icon.addEventListener("click", async (event) => {
-                    const transactionId = event.target.parentElement.parentElement.id;
-                    modalTitle.textContent = "Edit Transaction";
-    
-                    try {
-                        const response = await fetch(`/edit-transaction/${transactionId}`, {
-                            method: "GET"
-                        });
-    
-                        const data = await response.json();
-    
-                        if (data.success) {
-                            const transaction = data.transaction;
-                            console.log(transaction)
-    
-                            form.elements["description"].value = transaction[0]["category"];
-                            form.elements["price"].value = transaction[0]["amount"];
-                            form.elements["date"].value = transaction[0]["date"];
-    
-                            const saveBtn = document.getElementById("save-btn");
-                            saveBtn.dataset.transactionId = transaction[0]["id"];
-                            console.log(saveBtn.dataset.transactionId);
-                        } else {
-                            alert("Failed to fetch transaction details for editing.");
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('An error occurred while fetching transaction details for editing.');
-                    }
-                });
-            });
-    
-            const saveBtn = document.getElementById("save-btn");
-            saveBtn.addEventListener("click", async () => {
-                const formData = new FormData(form);
-    
-                const transactionId = saveBtn.dataset.transactionId;
-                console.log(transactionId)
-    
-                try {
-                    let response;
-                    if (transactionId) {
-                        response = await fetch(`/edit-transaction/${transactionId}`, {
-                            method: "POST",
-                            body: formData
-                        });
-                    } else {
-                        response = await fetch("/add-transaction", {
-                            method: "POST",
-                            body: formData
-                        });
-                    }
-    
-                    const data = await response.json();
-    
-                    if (data.success) {
-                        const transactionModal = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
-                        transactionModal.hide();
-    
-                        form.reset();
-    
-                        if (transactionId) {
-                            const editedRow = document.getElementById(transactionId);
-                            editedRow.innerHTML = `
-                                <td><i class="fas fa-edit edit"></i>${data.transaction[0]["category"]}</td>
-                                <td>P${data.transaction[0]["amount"]}</td>
-                                <td>${data.transaction[0]["date"]}</td>
-                            `;
-                        } else {
-                            const tbody = document.querySelector('table tbody');
-                            const newRow = document.createElement('tr');
-                            newRow.id = `transaction-${data.transaction.id}`;
-                            newRow.innerHTML = `
-                                <td><i class="fas fa-edit edit"></i>${data.transaction.category}</td>
-                                <td>P${data.transaction.amount}</td>
-                                <td>${data.transaction.date}</td>
-                            `;
-                            tbody.appendChild(newRow);
-    
-                            const noTransactionsRow = document.querySelector('table tbody tr td[colspan="4"]');
-                            if (noTransactionsRow) {
-                                noTransactionsRow.parentElement.remove();
-                            }
-                        }
-                    } else {
-                        alert("Failed to save transaction. Please try again later.");
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('An error occurred while saving the transaction.');
-                }
-            });
-    
-            const addBtn = document.getElementById("add-btn");
-            addBtn.addEventListener("click", () => {
-                modalTitle.textContent = "Add Transaction";
-                form.reset();
-                const saveBtn = document.getElementById("save-btn");
-                saveBtn.removeAttribute("data-transaction-id");
-            });
-
+            
     </script>
        
     {% endblock %}
