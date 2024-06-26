@@ -42,7 +42,6 @@ def login_required(f):
     
     return decorated_function
 
-
 @app.route("/")
 @login_required
 def index():
@@ -62,13 +61,23 @@ def add_transaction():
     if not description or not price or not date:
         return jsonify(success=False, error=" Missing data")
     
+    users_row = db.execute("SELECT * FROM users WHERE id = ?", session["user_id"])
+
+    weekly_budget = users_row[0]["weekly_budget"]
+    int_weekly_budget = int(weekly_budget)
+    int_price = int(price)
+    deducted_price = int_weekly_budget - int_price
+
+    if deducted_price < 1:
+        deducted_price = 0
+    
     try:
         transaction_id = db.execute("INSERT INTO transactions (category, amount, date, user_id) VALUES (?, ?, ?, ?)", description, price, date, session["user_id"])
     except Exception as e:
         return jsonify(success=False, error=str(e))
 
     new_transaction = db.execute("SELECT * FROM transactions WHERE id = ?", transaction_id)
-
+    db.execute("UPDATE users SET weekly_budget = ? WHERE id = ?", deducted_price, session["user_id"])
 
     if new_transaction:
         return jsonify(success=True, transaction=new_transaction[0])
@@ -209,9 +218,9 @@ def verify_email(token):
 @app.route("/setup", methods=["GET", "POST"])
 @login_required
 def setup():
-    user = db.execute("SELECT setup FROM users WHERE id = ?", session["user_id"])
+    user = db.execute("SELECT * FROM users WHERE id = ?", session["user_id"])
 
-    if user[0]["setup"] == 'True':
+    if user[0]["configured"] == 'True':
         return redirect("/")
     else:
         if request.method == "POST":
@@ -220,16 +229,15 @@ def setup():
             contact_number = request.form.get("contact-number")
 
             if not username or not weekly_budget or not contact_number:
-                flash("Missing details", "warning")
                 return redirect("/setup")
             
             weekly_budget = int(weekly_budget)
 
-            db.execute("UPDATE users SET username = ?, weekly_budget = ?, contact_number = ? WHERE id = ?", username, weekly_budget, contact_number, session["user_id"])
+            db.execute("UPDATE users SET username = ?, weekly_budget = ?, contact_number = ?, configured = ? WHERE id = ?", username, weekly_budget, contact_number, 'True', session["user_id"])
 
             return redirect("/")
         else:
-            return render_template("setup.html")
+            return render_template("setup.html", username=user[0]["username"])
 
 
 @app.route("/logout")
