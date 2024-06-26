@@ -4,7 +4,6 @@
     Home
 {% endblock %}
 
-
 {% block body %}
 
     <header>
@@ -46,7 +45,7 @@
                 <thead>
                     <tr>
                         <th>Type</th>
-                        <th>Money</th>
+                        <th>Amount</th>
                         <th>Date</th>
                     </tr>
                 </thead>
@@ -70,7 +69,7 @@
                 <button class="btn btn-outline-primary" id="add-btn" data-bs-toggle="modal" data-bs-target="#transactionModal">Add</button>
             </div>
             <div>
-                <p>Total Money: <strong>{{ users.weekly_budget }}</strong></p>
+                <p>Budget Left: P<strong>{{ users[0]["weekly_budget"] }}</strong></p>
             </div>
         </div>
 
@@ -106,6 +105,42 @@
             </div>
         </div>
 
+
+    <section class="tips-and-guidelines container mt-5">
+        <div class="row">
+            <div class="col-md-8">
+                <h3>Budget Saving</h3>
+                <div class="tip mt-3">
+                    <p><b>The 50/30/20 rule</b></p>
+                    <p>The 50/30/20 budget plan, for those who may not be aware, is an American idea that aims to minimize costs and manage finances wisely. Your income after taxes should be allocated as follows: 50% should go toward necessities, 30% toward wants, and 20% should go toward debt repayment or emergency savings.</p>
+                    <p>The 50-30-20 rule, which was popularized by US Senator Elizabeth Warren, a Harvard bankruptcy specialist, requires you to allocate your expenses according to percentages. Following taxes:
+                    </p>
+                    <ul>
+                        <li>You should allocate 50% of your income to necessities (such as groceries, transportation, medication, and the payment of required or minimum bills)</li> 
+                        <li>A third of your income should go toward non-essential expenses like luxury clothes, entertainment, superfluous travel, gym subscriptions, and so forth</li>
+                        <li>20% should be allocated to debt repayment and savings. Ideally, at least 10% of the 20% should go toward savings and loan and credit card debt repayment.</li>
+                    </ul>
+                        
+                    <p>More can be learned about the 50/20/30 rule <a href="https://www.metrobank.com.ph/articles/learn/50-30-20-budget-plan" target="_blank" rel="noreferrer">here.</a></p>
+                </div>
+            </div>
+            <div class="col md-4">
+                <img src="../static/50-30-20.png" alt="Graph of the 50/20/30 rule" class="img-fluid">
+            </div>
+        </div>
+        <p>You can calculate it here.</p>
+    </section>
+
+    <section class="container d-flex justify-content-center w-50 p-3 shadow-lg  rounded">
+        <div class="container">
+            <p class="text-center">50-20-30 Calculator</p>
+            <form id="budget-calculator">
+                <label>Weekly Budget</label>
+                <input type="number" min="1" required placeholder="2500..." class="form-control mt-3" id="budget">
+                <button type="submit" class="btn btn-primary mt-3">Calculate</button>
+                <p id="result" class="mt-2"></p>
+        </div>
+    </section>
     </main>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -120,8 +155,43 @@
     {% endblock %}
 
     {% block script %}
-    <script>
-            
-    </script>
-       
+        <script>
+            // Calculate 50-30-20 budget based on weekly budget
+            const budgetForm = document.getElementById("budget-calculator");
+            const weeklyBudget = document.getElementById("budget")
+            const result = document.getElementById("result");
+
+            const validateInput = () => {
+                if (!weeklyBudget) {
+                    result.classList.add("text-danger");
+                    result.textContent = "Please input your weekly budget"
+                    return false;
+                }
+
+                return true;
+            }
+
+            const calculateBudget = (e) => {
+
+                if (!validateInput) {
+                    return;
+                }   
+
+                e.preventDefault();
+
+                const budget = parseInt(weeklyBudget.value);
+
+                const fiftyDivide = budget * 0.5;
+                const thirtyDivide = budget * 0.3;
+                const twentyDivide = budget * 0.2;
+
+                result.innerHTML = `Divide your budget into: 
+                    <br>50%: ${fiftyDivide}
+                    <br>30%: ${thirtyDivide}
+                    <br>20%: ${twentyDivide}
+                `
+            }
+
+            budgetForm.addEventListener('submit', calculateBudget)
+        </script>
     {% endblock %}
