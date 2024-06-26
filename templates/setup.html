@@ -3,7 +3,57 @@
 {% block title %}
     Setup
 {% endblock %}
+{% block style %}
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f2f2f2;
+        }
 
+        .setup-box {
+            margin: 0 20vw;
+        }
+
+        .setup-container {
+            width: 70%;
+            height: auto;
+            margin-left: 15%;
+        }
+    </style>    
+
+{% endblock %}
 {% block body %}
+    <div class="container setup-box">
+        <div class="intro-screen">
+            <h1>Hello, {{ username }}</h1>
+            <p>Let's finish setting up your account</p>
+            <button class="btn btn-info" id="start-btn">Let's get started</button>
+        </div>
+        <div class="setup-container d-none bg-white p-4 rounded">
+            <h2>Setup</h2>
+            <form action="/setup" method="post" id="setup-form">
+                <div class="form-container">
+                    <label for="username" class="d-block">Username</label>
+                    <input placeholder="What should we call you?" name="username" id="username" type="text" required class="form-control mt-1">
+                </div>
+                <div class="form-container mt-2">
+                    <label for="budget" class="d-block">Weekly Budget</label>
+                    <input placeholder="What's your weekly budget?" name="weekly-budget" id="weekly-budget" required type="number" class="form-control mt-1" min="1">
+                </div>
+                <div class="form-container mt-2">
+                    <label for="contact-number" class="d-block">Contact Number</label>
+                    <input placeholder="Enter 11 digit number" name="contact-number" id="contact-number" required type="number" class="form-control mt-1" min="1">
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+                <p id="result" class="text-danger mt-3"></p>
+            </form>
+        </div>
+    </div>
+{% endblock %}
 
+{% block script %}
+    <script src="../static/signup.js"></script>
 {% endblock %}
